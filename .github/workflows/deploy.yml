@@ -1,4 +1,4 @@
-name: Build, Push and Deploy to Kubernetes
+name: Build and Push Docker Image
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,22 +30,3 @@ jobs:
           tags: |
             ${{ secrets.IMAGE_NAME }}:latest
             ${{ secrets.IMAGE_NAME }}:${{ github.sha }}
-
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'latest'
-
-      - name: Decode kubeconfig
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${KUBECONFIG_DATA}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-        env:
-          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG_DATA }}
-
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl apply -f k8s/
-          kubectl set image deployment/my-k8s-app my-k8s-app=${{ secrets.IMAGE_NAME }}:${{ github.sha }}
-          kubectl rollout status deployment/my-k8s-app
